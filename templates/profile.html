@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Profile | NutriMind AI{% endblock %}
+{% block content %}
+<section class="section-title-row">
+    <div>
+        <span class="pill">User profile</span>
+        <h2>Personal details and nutrition goals</h2>
+        <p class="subdued">These details improve BMI, calorie target, water target, and meal recommendations.</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</section>
+
+<form class="panel-card" method="post" novalidate>
+    <div class="grid-two">
+        <div>
+            <label for="full_name">Full name</label>
+            <input id="full_name" type="text" name="full_name" value="{{ user.full_name }}" required autocomplete="name">
+        </div>
+        <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" value="{{ user.email }}" disabled>
+        </div>
+    </div>
+
+    <div class="grid-two">
+        <div>
+            <label for="age">Age</label>
+            <input id="age" type="number" name="age" value="{{ user.age or '' }}" min="5" max="110">
+        </div>
+        <div>
+            <label for="gender">Gender</label>
+            <select id="gender" name="gender">
+                <option value="" {% if not user.gender %}selected{% endif %}>Select</option>
+                <option value="Male" {% if user.gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if user.gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Other" {% if user.gender == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid-two">
+        <div>
+            <label for="height_cm">Height (cm)</label>
+            <input id="height_cm" type="number" step="0.1" name="height_cm" value="{{ user.height_cm or '' }}" min="80" max="250">
+        </div>
+        <div>
+            <label for="weight_kg">Weight (kg)</label>
+            <input id="weight_kg" type="number" step="0.1" name="weight_kg" value="{{ user.weight_kg or '' }}" min="20" max="250">
+        </div>
+    </div>
+
+    <div class="grid-two">
+        <div>
+            <label for="diet_preference">Diet preference</label>
+            <select id="diet_preference" name="diet_preference">
+                <option value="veg" {% if user.diet_preference == 'veg' %}selected{% endif %}>Veg</option>
+                <option value="eggetarian" {% if user.diet_preference == 'eggetarian' %}selected{% endif %}>Eggetarian</option>
+                <option value="non_veg" {% if user.diet_preference == 'non_veg' %}selected{% endif %}>Non-Veg</option>
+            </select>
+        </div>
+        <div>
+            <label for="goal">Goal</label>
+            <select id="goal" name="goal">
+                <option value="general_fitness" {% if user.goal == 'general_fitness' %}selected{% endif %}>General Fitness</option>
+                <option value="weight_loss" {% if user.goal == 'weight_loss' %}selected{% endif %}>Weight Loss</option>
+                <option value="muscle_gain" {% if user.goal == 'muscle_gain' %}selected{% endif %}>Muscle Gain</option>
+                <option value="maintenance" {% if user.goal == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                <option value="recovery" {% if user.goal == 'recovery' %}selected{% endif %}>Recovery</option>
+            </select>
+        </div>
+    </div>
+
+    <label for="allergies">Allergies / restrictions</label>
+    <input id="allergies" type="text" name="allergies" value="{{ user.allergies or '' }}" placeholder="Example: peanut, lactose, egg">
+
+    <button class="btn btn-primary" type="submit">Save Changes</button>
+</form>
+{% endblock %}

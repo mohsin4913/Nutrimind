@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}NutriMind AI | Home{% endblock %}
+{% block content %}
+<section class="hero-card">
+    <div class="hero-copy">
+        <span class="pill">Built for everyday wellness</span>
+        <h1>Personalized AI diet planner.</h1>
+        <p>
+            Smart meal planning, health tracking, and personalized nutrition — All in one place.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="{{ url_for('signup') }}">Create Account</a>
+            <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
+        </div>
+        <div class="feature-grid compact">
+            <div class="mini-card"><strong>Secure Auth</strong><span>Password hashing</span></div>
+            <div class="mini-card"><strong>AI Meals</strong><span>Diet + allergy aware</span></div>
+            <div class="mini-card"><strong>Progress</strong><span>Steps, water, weight</span></div>
+            <div class="mini-card"><strong>Export</strong><span>PDF report</span></div>
+        </div>
+    </div>
+    <div class="hero-visual" aria-label="Project workflow preview">
+        <div class="glass-panel timeline-panel">
+            <div class="metric">
+                <span>1. Create profile</span>
+                <strong>Age, height, weight, goal</strong>
+            </div>
+            <div class="metric">
+                <span>2. Enter kitchen items</span>
+                <strong>AI ranks safe meals</strong>
+            </div>
+            <div class="metric">
+                <span>3. Track daily progress</span>
+                <strong>Steps + water + weight</strong>
+            </div>
+            <div class="metric">
+                <span>4. Review results</span>
+                <strong>PDF + 7-day chart</strong>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Signup | NutriMind AI{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+    <form class="auth-card wide" method="post" novalidate>
+        <span class="pill">Get started</span>
+        <h2>Create your health profile</h2>
+
+        <div class="grid-two">
+            <div>
+                <label for="full_name">Full name</label>
+                <input id="full_name" type="text" name="full_name" placeholder="Your full name" required autocomplete="name">
+            </div>
+            <div>
+                <label for="email">Email</label>
+                <input id="email" type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+            </div>
+        </div>
+
+        <div class="grid-two">
+            <div>
+                <label for="password">Password</label>
+                <input id="password" type="password" name="password" placeholder="Minimum 6 characters" required minlength="6" autocomplete="new-password">
+            </div>
+            <div>
+                <label for="age">Age</label>
+                <input id="age" type="number" name="age" placeholder="20" min="5" max="110">
+            </div>
+        </div>
+
+        <div class="grid-two">
+            <div>
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender">
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div>
+                <label for="height_cm">Height (cm)</label>
+                <input id="height_cm" type="number" step="0.1" name="height_cm" placeholder="170" min="80" max="250">
+            </div>
+        </div>
+
+        <div class="grid-two">
+            <div>
+                <label for="weight_kg">Weight (kg)</label>
+                <input id="weight_kg" type="number" step="0.1" name="weight_kg" placeholder="65" min="20" max="250">
+            </div>
+            <div>
+                <label for="diet_preference">Diet preference</label>
+                <select id="diet_preference" name="diet_preference">
+                    <option value="veg">Veg</option>
+                    <option value="eggetarian">Eggetarian</option>
+                    <option value="non_veg">Non-Veg</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-two">
+            <div>
+                <label for="goal">Goal</label>
+                <select id="goal" name="goal">
+                    <option value="general_fitness">General Fitness</option>
+                    <option value="weight_loss">Weight Loss</option>
+                    <option value="muscle_gain">Muscle Gain</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="recovery">Recovery</option>
+                </select>
+            </div>
+            <div>
+                <label for="allergies">Allergies / restrictions</label>
+                <input id="allergies" type="text" name="allergies" placeholder="Peanut, lactose, egg, gluten, etc.">
+            </div>
+        </div>
+
+        <button class="btn btn-primary full" type="submit">Create Account</button>
+        <p class="auth-foot">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+    </form>
+</section>
+{% endblock %}

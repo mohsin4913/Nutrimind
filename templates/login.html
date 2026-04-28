@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Login | NutriMind AI{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+    <form class="auth-card" method="post">
+        <span class="pill">Welcome back</span>
+        <h2>Login to your account</h2>
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button class="btn btn-primary full" type="submit">Login</button>
+        <p class="auth-foot">New user? <a href="{{ url_for('signup') }}">Create an account</a></p>
+    </form>
+</section>
+{% endblock %}

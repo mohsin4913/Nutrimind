@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | NutriMind AI{% endblock %}
+{% block content %}
+<section class="section-title-row">
+    <div>
+        <span class="pill">Dashboard</span>
+        <h2>Hello, {{ current_user.full_name.split(' ')[0] }} 👋</h2>
+        <p class="subdued">Track steps, generate meals from kitchen items, and maintain a personalized 7-day health record for any user profile.</p>
+    </div>
+    <div class="hero-actions wrap-end">
+        <form method="post" action="{{ url_for('prepare_sample_week') }}">
+            <button class="btn btn-secondary" type="submit">Prepare Sample Week</button>
+        </form>
+        <a class="btn btn-primary" href="{{ url_for('download_report') }}">Download PDF</a>
+    </div>
+</section>
+
+<section class="summary-grid">
+    <div class="summary-card">
+        <span>Today's steps</span>
+        <strong>{{ summary.today_log.steps or 0 }}</strong>
+        <small>Target: {{ summary.insights.step_target }}</small>
+    </div>
+    <div class="summary-card">
+        <span>Average steps</span>
+        <strong>{{ summary.avg_steps }}</strong>
+        <small>Last 7 days</small>
+    </div>
+    <div class="summary-card">
+        <span>Average water</span>
+        <strong>{{ summary.avg_water }} L</strong>
+        <small>Target: {{ summary.insights.water_target }} L</small>
+    </div>
+    <div class="summary-card">
+        <span>BMI status</span>
+        <strong>{{ summary.insights.bmi or '—' }}</strong>
+        <small>{{ summary.insights.bmi_label }}</small>
+    </div>
+    <div class="summary-card">
+        <span>Calorie target</span>
+        <strong>{{ summary.insights.calorie_target }}</strong>
+        <small>Based on profile</small>
+    </div>
+    <div class="summary-card">
+        <span>Latest AI meal</span>
+        <strong>{{ summary.latest_meal }}</strong>
+        <small>Personalized recommendation</small>
+    </div>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel-card">
+        <div class="card-head">
+            <div>
+                <h3>AI Meal Generator</h3>
+                <p>Enter real kitchen items. The engine respects diet preference, allergies, meal timing, and health goal.</p>
+            </div>
+        </div>
+
+        <form method="post" action="{{ url_for('generate_meal') }}">
+            <input type="hidden" name="log_date" value="{{ today }}">
+            <label for="kitchen_items">Kitchen items</label>
+            <textarea id="kitchen_items" name="kitchen_items" rows="4" placeholder="Example: oats, banana, curd, paneer, rice, egg — live API can search real recipes from these items" required>{{ summary.today_log.kitchen_items or '' }}</textarea>
+
+            <div class="grid-two">
+                <div>
+                    <label for="meal_type">Meal type</label>
+                    <select id="meal_type" name="meal_type">
+                        <option value="breakfast" {% if summary.today_log.meal_type == 'breakfast' %}selected{% endif %}>Breakfast</option>
+                        <option value="lunch" {% if summary.today_log.meal_type == 'lunch' %}selected{% endif %}>Lunch</option>
+                        <option value="dinner" {% if summary.today_log.meal_type == 'dinner' %}selected{% endif %}>Dinner</option>
+                        <option value="snack" {% if summary.today_log.meal_type == 'snack' %}selected{% endif %}>Snack</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="diet_preference">Diet preference</label>
+                    <select id="diet_preference" name="diet_preference">
+                        <option value="veg" {% if current_user.diet_preference == 'veg' %}selected{% endif %}>Veg</option>
+                        <option value="eggetarian" {% if current_user.diet_preference == 'eggetarian' %}selected{% endif %}>Eggetarian</option>
+                        <option value="non_veg" {% if current_user.diet_preference == 'non_veg' %}selected{% endif %}>Non-Veg</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="goal">Goal</label>
+            <select id="goal" name="goal">
+                <option value="general_fitness" {% if current_user.goal == 'general_fitness' %}selected{% endif %}>General Fitness</option>
+                <option value="weight_loss" {% if current_user.goal == 'weight_loss' %}selected{% endif %}>Weight Loss</option>
+                <option value="muscle_gain" {% if current_user.goal == 'muscle_gain' %}selected{% endif %}>Muscle Gain</option>
+                <option value="maintenance" {% if current_user.goal == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                <option value="recovery" {% if current_user.goal == 'recovery' %}selected{% endif %}>Recovery</option>
+            </select>
+            {% if current_user.allergies %}
+                <p class="small-note">Allergy filter active: {{ current_user.allergies }}</p>
+            {% endif %}
+
+            <button class="btn btn-primary full" type="submit">Generate AI Meal + Recipe Search</button>
+        </form>
+
+        {% if meal_payload and meal_payload.recommendations %}
+            {% set top_meal = meal_payload.recommendations[0] %}
+            <div class="meal-result-wrap">
+                <div class="meal-highlight">
+                    <div class="meal-highlight-head">
+                        <div>
+                            <span class="pill">Top recommendation</span>
+                            <h4>{{ top_meal.name }}</h4>
+                        </div>
+                        <div class="health-score-badge" aria-label="Meal health score">
+                            <span>{{ top_meal.health_score | default(top_meal.score) }}</span>
+                            <small>/100 Meal Score</small>
+                        </div>
+                    </div>
+
+                    <div class="ai-explanation-card">
+                        <strong>AI Explanation</strong>
+                        <p>{{ top_meal.explanation }}</p>
+                        {% if top_meal.reasons %}
+                            <ul class="reason-list">
+                                {% for reason in top_meal.reasons[:3] %}
+                                    <li>{{ reason }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    {% if top_meal.score_breakdown %}
+                        <div class="score-breakdown-grid" aria-label="Meal score breakdown">
+                            <div><span>Goal match</span><strong>{{ top_meal.score_breakdown.goal_match }}</strong></div>
+                            <div><span>Protein</span><strong>{{ top_meal.score_breakdown.protein_match }}</strong></div>
+                            <div><span>Calories</span><strong>{{ top_meal.score_breakdown.calorie_fit }}</strong></div>
+                            <div><span>Allergy check</span><strong>{{ top_meal.score_breakdown.allergy_safety }}</strong></div>
+                            <div><span>Ingredients</span><strong>{{ top_meal.score_breakdown.ingredient_match }}</strong></div>
+                            <div><span>Prep effort</span><strong>{{ top_meal.score_breakdown.prep_effort }}</strong></div>
+                        </div>
+                    {% endif %}
+
+                    <div class="macro-row" aria-label="Nutrition macros">
+                        <span>{{ top_meal.calories }} kcal</span>
+                        <span>{{ top_meal.protein }}g protein</span>
+                        <span>{{ top_meal.carbs }}g carbs</span>
+                        <span>{{ top_meal.fats }}g fats</span>
+                    </div>
+                    <p><strong>Recipe:</strong> {{ top_meal.recipe }}</p>
+                    {% if top_meal.missing_ingredients %}
+                        <p class="small-note"><strong>Extra items needed:</strong> {{ top_meal.missing_ingredients | join(', ') }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="recommendation-list">
+                    {% for meal in meal_payload.recommendations %}
+                        <div class="recommendation-item">
+                            <div>
+                                <strong>#{{ meal.rank }} {{ meal.name }}</strong>
+                                <p>{{ meal.benefits }}</p>
+                            </div>
+                            <span class="score-chip">Health {{ meal.health_score | default(meal.score) }}/100</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="api-recipe-panel">
+                    <div class="card-head compact-head">
+                        <div>
+                            <span class="pill">Live food API</span>
+                            <h4>External recipe database results</h4>
+                            <p class="small-note">{{ meal_payload.external_api.summary if meal_payload.external_api else 'Connect an API key to search a wider recipe database.' }}</p>
+                        </div>
+                    </div>
+
+                    {% if meal_payload.external_api and meal_payload.external_api.recipes %}
+                        <div class="api-recipe-grid">
+                            {% for recipe in meal_payload.external_api.recipes %}
+                                <article class="api-recipe-card">
+                                    {% if recipe.image %}
+                                        <img src="{{ recipe.image }}" alt="{{ recipe.name }} recipe image" loading="lazy">
+                                    {% endif %}
+                                    <div class="api-recipe-body">
+                                        <strong>#{{ recipe.rank }} {{ recipe.name }}</strong>
+                                        <p>{{ recipe.summary }}</p>
+                                        <div class="macro-row compact-macros">
+                                            {% if recipe.ready_in_minutes %}<span>{{ recipe.ready_in_minutes }} min</span>{% endif %}
+                                            {% if recipe.servings %}<span>{{ recipe.servings }} servings</span>{% endif %}
+                                            {% if recipe.calories %}<span>{{ recipe.calories }} kcal</span>{% endif %}
+                                            {% if recipe.protein %}<span>{{ recipe.protein }}g protein</span>{% endif %}
+                                        </div>
+                                        {% if recipe.ingredients %}
+                                            <p class="small-note"><strong>Ingredients:</strong> {{ recipe.ingredients[:6] | join(', ') }}</p>
+                                        {% endif %}
+                                        {% if recipe.steps %}
+                                            <ol class="recipe-steps">
+                                                {% for step in recipe.steps[:3] %}
+                                                    <li>{{ step }}</li>
+                                                {% endfor %}
+                                            </ol>
+                                        {% endif %}
+                                        {% if recipe.source_url %}
+                                            <a class="btn btn-secondary full" href="{{ recipe.source_url }}" target="_blank" rel="noopener">Open full recipe</a>
+                                        {% endif %}
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state api-empty">
+                            Live recipe search is optional. If internet or API access is unavailable, the offline AI engine above continues to work safely for any user.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% elif meal_payload and meal_payload.external_api and meal_payload.external_api.recipes %}
+            <div class="api-recipe-panel standalone-api-panel">
+                <div class="card-head compact-head">
+                    <div>
+                        <span class="pill">Live food API</span>
+                        <h4>External recipe database results</h4>
+                        <p class="small-note">{{ meal_payload.external_api.summary }}</p>
+                    </div>
+                </div>
+                <div class="api-recipe-grid">
+                    {% for recipe in meal_payload.external_api.recipes %}
+                        <article class="api-recipe-card">
+                            {% if recipe.image %}
+                                <img src="{{ recipe.image }}" alt="{{ recipe.name }} recipe image" loading="lazy">
+                            {% endif %}
+                            <div class="api-recipe-body">
+                                <strong>#{{ recipe.rank }} {{ recipe.name }}</strong>
+                                <p>{{ recipe.summary }}</p>
+                                <div class="macro-row compact-macros">
+                                    {% if recipe.ready_in_minutes %}<span>{{ recipe.ready_in_minutes }} min</span>{% endif %}
+                                    {% if recipe.servings %}<span>{{ recipe.servings }} servings</span>{% endif %}
+                                    {% if recipe.calories %}<span>{{ recipe.calories }} kcal</span>{% endif %}
+                                    {% if recipe.protein %}<span>{{ recipe.protein }}g protein</span>{% endif %}
+                                </div>
+                                {% if recipe.ingredients %}
+                                    <p class="small-note"><strong>Ingredients:</strong> {{ recipe.ingredients[:6] | join(', ') }}</p>
+                                {% endif %}
+                                {% if recipe.steps %}
+                                    <ol class="recipe-steps">
+                                        {% for step in recipe.steps[:3] %}
+                                            <li>{{ step }}</li>
+                                        {% endfor %}
+                                    </ol>
+                                {% endif %}
+                                {% if recipe.source_url %}
+                                    <a class="btn btn-secondary full" href="{{ recipe.source_url }}" target="_blank" rel="noopener">Open full recipe</a>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">Your AI meal output will appear here after generation.</div>
+        {% endif %}
+    </article>
+
+    <article class="panel-card">
+        <div class="card-head">
+            <div>
+                <h3>Step Counter + Daily Progress</h3>
+                <p>Use step preview on laptop or mobile motion on supported phones, then save the value.</p>
+            </div>
+        </div>
+
+        <div class="step-preview-box">
+            <div class="step-big" id="liveStepCount">{{ summary.today_log.steps or 0 }}</div>
+            <p class="subdued center">Live counter</p>
+            <div class="hero-actions center wrap-end">
+                <button type="button" class="btn btn-secondary" id="simulateWalkBtn">Start Step Preview</button>
+                <button type="button" class="btn btn-secondary" id="mobileTrackingBtn">Enable Mobile Motion</button>
+                <button type="button" class="btn btn-secondary" id="resetStepsBtn">Reset</button>
+            </div>
+            <p id="stepTrackerMessage" class="small-note">Tip: for a stable presentation, use step preview. On supported phones, motion tracking can add steps automatically.</p>
+        </div>
+
+        <form method="post" action="{{ url_for('save_progress') }}">
+            <input type="hidden" name="log_date" value="{{ today }}">
+            <div class="grid-two">
+                <div>
+                    <label for="stepsInput">Steps</label>
+                    <input id="stepsInput" type="number" name="steps" value="{{ summary.today_log.steps or 0 }}" min="0" max="100000" required>
+                </div>
+                <div>
+                    <label for="water_liters">Water (liters)</label>
+                    <input id="water_liters" type="number" step="0.1" name="water_liters" value="{{ summary.today_log.water_liters or 0 }}" min="0" max="10" required>
+                </div>
+            </div>
+            <div class="grid-two">
+                <div>
+                    <label for="weight_kg">Weight (kg)</label>
+                    <input id="weight_kg" type="number" step="0.1" name="weight_kg" value="{{ summary.today_log.weight_kg or current_user.weight_kg or '' }}" min="20" max="250">
+                </div>
+                <div>
+                    <label for="notes">Notes</label>
+                    <input id="notes" type="text" name="notes" value="{{ summary.today_log.notes or '' }}" maxlength="250" placeholder="How did you feel today?">
+                </div>
+            </div>
+            <button class="btn btn-primary full" type="submit">Save Daily Progress</button>
+        </form>
+
+        <form method="post" action="{{ url_for('save_steps') }}" class="inline-form">
+            <input type="hidden" id="stepsSyncInput" name="steps" value="{{ summary.today_log.steps or 0 }}">
+            <button class="btn btn-secondary full" type="submit">Sync Live Counter to Today</button>
+        </form>
+    </article>
+</section>
+
+<section class="panel-card">
+    <div class="card-head">
+        <div>
+            <h3>7-Day Progress Tracker</h3>
+            <p>Visual summary of steps, hydration, and selected meals against your target.</p>
+        </div>
+    </div>
+
+    <div class="progress-chart">
+        {% for item in bars %}
+            <div class="bar-card">
+                <div class="bar-shell" title="{{ item.steps }} steps">
+                    <div class="bar-fill" style="height: {{ item.percentage }}%"></div>
+                </div>
+                <strong>{{ item.label }}</strong>
+                <span>{{ item.steps }} steps</span>
+                <small>{{ item.water }} L | {{ item.meal }}</small>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Steps</th>
+                    <th>Water (L)</th>
+                    <th>Meal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in bars %}
+                <tr>
+                    <td>{{ item.date }}</td>
+                    <td>{{ item.steps }}</td>
+                    <td>{{ item.water }}</td>
+                    <td>{{ item.meal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
